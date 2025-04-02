@@ -21,8 +21,11 @@ const byte dynPin = 2; //динамик
 iarduino_OLED myOLED(0x3C)  // Создаём объект myOLED, указывая адрес дисплея на шине I2C: 0x3C или 0x3D [1](https://wiki.iarduino.ru/page/OLED_trema/)
 //---------------------------------
     // Обнаружить газ.
+
+int gasData;
 void gas(){
   int analogSensor = analogRead(smokePin);  // считываем значения АЦП с аналогового входа, к которому подключен датчик [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
+    gasData=analogSensor;
     Serial.print(analogSensor);  // выводим в порт значение АЦП сигнала с датчика
     // Проверяем, достигнуто ли пороговое значение [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
     if (analogSensor > sensorThres) {  // если значение больше допустимого...
@@ -59,9 +62,38 @@ void setup() {
 //------------------------------------------
 pinMode(dynPin, OUTPUT);  // настраиваем контакт №2 на выход
 //--------------------------------------------------------
-
+   s=1;
 }
 
 void loop() {
-  
+    //триггеры
+
+    if (s==1){
+      if(gasData>100){
+        s=2;        
+      }
+    }
+    if (s==2){
+      if(gasData<100){
+        s=1;        
+      }
+    }
+    //состояния
+//измерять
+    if (s==1){
+      gas();
+      info_gas();
+    }
+  //тревога
+     if (s==2){
+       signal();
+       gas();
+      info_gas();
+    }
+  //
+
+  //разряжен
+   if (s==3){
+      
+    }
 }
