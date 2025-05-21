@@ -1,4 +1,4 @@
-,у# Karpukhin_gasoanalizator
+# Karpukhin_gasoanalizator
 Карманный газоанолизатор.
 
 Ресурсы для внутренной части устройства:
