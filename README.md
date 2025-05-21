@@ -14,7 +14,7 @@
 10. Выключатель.
 11. Транзистор N.
     
-![проект-Иван](https://github.com/user-attachments/assets/12d98bdf-2ebc-492d-911e-a75c5611d4a4)
+![Проект Ивана](https://github.com/user-attachments/assets/12d98bdf-2ebc-492d-911e-a75c5611d4a4)
 
 Состояния работы устройства:
 1. Ждёт.
