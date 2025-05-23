@@ -10,7 +10,7 @@
 8. Контроллер Arduino Nano.
 9. Транзистор N.
 
-![Проект Ивана](https://github.com/rse0003/Karpukhin_gasoanalizator/blob/main/%D0%9F%D1%80%D0%BE%D0%B5%D0%BA%D1%82%20%D0%98%D0%B2%D0%B0%D0%BD%D0%B0.png?raw=true)
+![Проект Ивана](https://ibb.co/qFDCR86c)
 
 Состояния работы устройства:
 1. Ждёт.
