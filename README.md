@@ -34,4 +34,4 @@
 http://clck.ru/3MLtXe
 
 ## Плакат для выставки:
-![Плакат](https://s.iimg.su/s/31/zuhDE49MiZKwNiZXeSFcBPRl5zQtULUTAOmpw4di.jpg)
+![Плакат](https://github.com/rse0003/Karpukhin_gasoanalizator/blob/main/%D0%9F%D0%BB%D0%B0%D0%BA%D0%B0%D1%82.png?raw=true)
