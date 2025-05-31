@@ -32,3 +32,6 @@
 
 ## Секретный файл:
 http://clck.ru/3MLtXe
+
+##Плакат для выставки:
+![Плакат] (https://s.iimg.su/s/31/zuhDE49MiZKwNiZXeSFcBPRl5zQtULUTAOmpw4di.jpg)
