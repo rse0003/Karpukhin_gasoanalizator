@@ -1,99 +1,102 @@
-//-слэш - разрез /слэш в гору \слэш с горы
-//Маркеры памяти
-//void - пустота - космос - ничего - не использует память
-//int  - интеджер - целое - память для чисел 12345
-//char - символы - буквы
-//long - для всего
-//------setup - Название
-//------() - круглые скобки (SHIFT+9, SHIFT+0) настройки
-//------{} - фигурные скобки (SHIFT+Х, SHIFT+Ъ) Начало и конец
-//Сложных приказов
+#include <Wire.h>  // Подключаем библиотеку для I2C
+#include <Adafruit_GFX.h>  // Графическая библиотека для дисплея
+#include <Adafruit_SSD1306.h>  // Библиотека для OLED-дисплея SSD1306
 
-#define smokePin A0  // определяем аналоговый выход, к которому подключен датчик [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-int sensorThres = 400;  // пороговое значение АЦП, при котором считаем, что газ есть [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-//----------------------------------------
-const byte dynPin = 2; //динамик
-//-------------------------------
+// Определяем параметры экрана
+#define SCREEN_WIDTH 128  // Ширина дисплея в пикселях
+#define SCREEN_HEIGHT 64  // Высота дисплея в пикселях
+#define OLED_RESET    -1  // Сброс дисплея не используется
 
-#include <Wire.h>  // Подключаем библиотеку для работы с аппаратной шиной I2C [1](https://wiki.iarduino.ru/page/OLED_trema/)
-#include <iarduino_OLED.h>  // Подключаем библиотеку iarduino_OLED [1](https://wiki.iarduino.ru/page/OLED_trema/)
+// Создаем объект дисплея
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// iarduino_OLED myOLED(0x3C)  // Создаём объект myOLED, указывая адрес дисплея на шине I2C: 0x3C или 0x3D [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//---------------------------------
-    // Обнаружить газ.
+// Определяем пины
+#define MQ2_PIN A0         // Пин для считывания данных с датчика газа MQ2
+#define BATTERY_PIN A1     // Пин для мониторинга напряжения батареи
+#define BUZZER_PIN 3       // Пин для подключения пьезодинамика
+#define BUTTON_PIN 2       // Пин кнопки включения/выключения
 
-// int gasData;
-// void gas(){
-//   int analogSensor = analogRead(smokePin);  // считываем значения АЦП с аналогового входа, к которому подключен датчик [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-//     gasData=analogSensor;
-//     Serial.print(analogSensor);  // выводим в порт значение АЦП сигнала с датчика
-//     // Проверяем, достигнуто ли пороговое значение [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-//     if (analogSensor > sensorThres) {  // если значение больше допустимого...
-//         Serial.println("Gaz!");  // выводим в порт надпись, что газ есть [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-//     } else {  // иначе...
-//         Serial.println("normal");  // выводим в порт надпись, что газа нет [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-//     }
-//     delay(500);  // задержка в 500 миллисекунд [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-// }
+// Переменные состояния
+bool deviceOn = false;             // Включено ли устройство
+unsigned long lastButtonPress = 0; // Время последнего нажатия кнопки
+const int co2Threshold = 400;      // Порог тревоги по концентрации газа
 
-// #include iarduino_RTC time(RTC_DS3231);// [2](https://edurobots.org/2017/05/arduino-real-time-clock-ds3231/)
-//----------------------------------------------------
-    // Подать сигнал при низком заряде аккумулятора.
-void signal(){
-    tone(dynPin, 100);  // генерируем звук с частотой 100 Гц
-    delay(100);  // пауза 500 миллисекунд
-    noTone(dynPin);  // выключаем звук
-    delay(900);  // снова пауза 500 мс
+void setup() {
+  pinMode(BUZZER_PIN, OUTPUT);           // Устанавливаем пин бузера как выход
+  pinMode(BUTTON_PIN, INPUT_PULLUP);     // Кнопка с подтяжкой к питанию
+  pinMode(MQ2_PIN, INPUT);               // Вход с датчика газа
+  pinMode(BATTERY_PIN, INPUT);           // Вход для измерения напряжения батареи
+
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), toggleDevice, FALLING); // Прерывание на кнопку
+
+  // Инициализация дисплея
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    while (true); // Если дисплей не инициализировался — зависаем
+  }
+
+  // Приветственное сообщение на экране
+  display.clearDisplay();      // Очистить дисплей
+  display.setTextSize(1);      // Размер текста
+  display.setTextColor(SSD1306_WHITE); // Цвет текста — белый
+  display.setCursor(0,0);      // Позиция курсора
+  display.println("ГАЗОАНАЛИЗАТОР"); // Вывод текста
+  display.display();           // Отображение на экране
+  delay(2000);                 // Задержка 2 секунды
 }
-    // Показать вид газа.
-// void info_gaz(){
-//   myOLED.print( 123456789 , 0, 7 )  // Выводим целое положительное число начиная с координаты 0x0 [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//   myOLED.print(-123456789 , 0, 15)  // Выводим целое отрицательное число начиная с координаты 0x15 [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//   myOLED.print( 123456789 , 0, 23, HEX)  // Выводим целое положительное число начиная с координаты 0x23, в 16-ричной системе счисления [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//   myOLED.print( 123456789 , 0, 31, OCT )  // Выводим целое положительное число начиная с координаты 0x31, в 8-ричной системе счисления [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//   myOLED.print(-123.456789, 0, 39)  // Выводим число с плавающей точкой начиная с координаты 0x39, по умолчанию отобразится 2 знака после запятой [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//   myOLED.print( 123.456789, 0, 47, 3)  // Выводим число с плавающей точкой начиная с координаты 0x47, указывая 3 знака после запятой [1](https://wiki.iarduino.ru/page/OLED_trema/)
-//   myOLED.print( 123 , 0, 55, BIN)  // Выводим целое положительное число начиная с координаты 0x55, в 2-ичной системе счисления [1](https://wiki.iarduino.ru/page/OLED_trema/) z
-//   myOLED.print( 123 , 0, 63, 12)  // Выводим целое положительное число начиная с координаты 0x63, в 12-ричной системе счисления [1](https://wiki.iarduino.ru/page/OLED_trema/)
-// }
 
-void setup() {  
-   Serial.begin(9600);  // Устанавливаем скорость порта 9600 бод [3](https://mcustore.ru/projects/podklyuchenie-datchika-gaza-mq-2-k-arduino/)
-//------------------------------------------
-pinMode(dynPin, OUTPUT);  // настраиваем контакт №2 на выход
-//--------------------------------------------------------
-}
- int s=1;
 void loop() {
-  signal();
-//     //триггеры
+  if (!deviceOn) {       // Если устройство выключено
+    displayOff();        // Показать сообщение и не делать ничего
+    return;
+  }
 
-//     if (s==1){
-//       if(gasData>100){
-//         s=2;        
-//       }
-//     }
-//     if (s==2){
-//       if(gasData<100){
-//         s=1;        
-//       }
-//     }
-//     //состояния
-// //измерять
-//     if (s==1){
-//       gas();
-//       info_gas();
-//     }
-//   //тревога
-//      if (s==2){
-//        signal();
-//        gas();
-//       info_gas();
-//     }
-//   //
+  int gasValue = analogRead(MQ2_PIN);  // Считываем значение с датчика газа
+  float batteryVoltage = analogRead(BATTERY_PIN) * (5.0 / 1023.0) * 2; // Напряжение батареи (через делитель)
 
-//   //разряжен
-//    if (s==3){
-      
-//     }
+  display.clearDisplay();         // Очищаем дисплей
+  display.setCursor(0, 0);        // Устанавливаем курсор в начало
+  display.print("CO2 уровень: "); // Текст "CO2 уровень:"
+  display.println(gasValue);      // Выводим значение газа
+
+  display.setCursor(0, 20);           // Следующая строка
+  display.print("Батарея: ");         // Текст "Батарея:"
+  display.print(batteryVoltage, 1);   // Напряжение батареи с одной цифрой после запятой
+  display.println(" В");              // Единицы измерения
+
+  if (gasValue > co2Threshold) {      // Если газ превышает порог
+    display.setCursor(0, 40);         // Следующая строка
+    display.println("ОПАСНО: Газ!!!");// Предупреждение
+    tone(BUZZER_PIN, 1000);           // Включаем звук 1 кГц
+  } else {
+    noTone(BUZZER_PIN);               // Иначе выключаем звук
+  }
+
+  if (batteryVoltage < 3.3) {         // Если напряжение батареи ниже нормы
+    display.setCursor(0, 52);         // Строка предупреждения
+    display.println("НИЗКИЙ ЗАРЯД!"); // Предупреждение о батарее
+    tone(BUZZER_PIN, 500);            // Включаем звук 500 Гц
+  }
+
+  display.display();        // Обновляем экран
+  delay(500);               // Задержка 0.5 секунды
+}
+
+void toggleDevice() {
+  unsigned long now = millis();             // Получаем текущее время
+  if (now - lastButtonPress > 500) {        // Защита от дребезга кнопки
+    deviceOn = !deviceOn;                   // Меняем состояние устройства
+    if (!deviceOn) {                        // Если выключено
+      noTone(BUZZER_PIN);                   // Выключаем звук
+      displayOff();                         // Показать экран выключения
+    }
+    lastButtonPress = now;                  // Сохраняем время нажатия
+  }
+}
+
+void displayOff() {
+  display.clearDisplay();                   // Очищаем дисплей
+  display.setCursor(0, 0);                  // Устанавливаем курсор
+  display.println("Устройство выключено");  // Сообщение о выключении
+  display.display();                        // Обновляем экран
+  delay(100);                               // Короткая задержка
 }
